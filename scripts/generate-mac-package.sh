@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 set -e
 
 SOURCEDIR=src
@@ -33,8 +32,6 @@ mkdir $DEBUGDIR
 mkdir $RELEASEDIR
 mkdir $DATADIR
 mkdir $DMGDIR
-
-if false; then
 
 pushd $SOURCEQTDIR > /dev/null
 
@@ -86,7 +83,6 @@ macdeployqt $RELEASEDIR/rpcemu-interpreter.app
 
 echo * Release - recompiler
 macdeployqt $RELEASEDIR/rpcemu-recompiler.app
-fi
 
 echo Copying to data directory...
 for i in cmos.ram COPYING readme.txt rpc.cfg ; do cp $i $DATADIR/ ; done
