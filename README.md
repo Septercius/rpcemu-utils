@@ -44,6 +44,18 @@ When compilation has completed, install QT:
     
 This will prompt you to enter your normal password.  When the shell prompt appears, QT is ready for use.
 
+### generate-mac-package.sh
+
+This script automates the process of constructing a package for OS X releases of RPCEmu.  It should be invoked from the root of the RPCEmu source distribution (i.e. the folder that contains "src").  It will create a folder whose name includes the version and the date and time in "../Releases".
+
+Both debug and release builds will be built, for the two configurations of RPCEmu - interpreter and recompiler.  These will be placed in separate directories ("Debug", "Release") and be modified via "macdeployqt" to generate self-contained application bundles.
+
+The script will also copy the required data files and folders ("cmos.ram", "netroms", "poduleroms", etc) into a folder named "Data" and then mirror this inside the "Debug" and "Release" folders with the name "RPCEmu".
+
+Finally, the script will create DMGs for both types of build, and copy these into the "DMGs" folder and name them appropriately.
+
+Note that the script does not have very much (if anything) in the way of error handling and relies on everything being just so.
+
 ### make-patch.sh
 
 This is a simple Bash script used to generate a patch file from a folder of unified diffs.  It requires a single parameter, namely the folder that contains the diff files.  For example:
