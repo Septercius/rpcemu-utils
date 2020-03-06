@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 SOURCEDIR=src
 SOURCEQTDIR=src/qt5
@@ -8,7 +9,7 @@ MAKEOPTS=-j5
 
 VERSION=$(cat $SOURCEDIR/rpcemu.h | grep '#define VERSION' | cut -d ' ' -f 3 | sed -e 's/\"//g')
 NOW=$(date +"%Y%m%d-%H%M%S")
-RELEASENAME=RPCEmu-$VERSION
+RELEASENAME=RPCEmu-$VERSION$1
 
 TARGETDIR=../Releases/$RELEASENAME-$NOW
 DEBUGDIR=$TARGETDIR/Debug
@@ -16,7 +17,7 @@ RELEASEDIR=$TARGETDIR/Release
 DATADIR=$TARGETDIR/Data
 DMGDIR=$TARGETDIR/DMGs
 
-echo Building release '$RELEASENAME'
+echo Building release \'$RELEASENAME\'
 
 if [ -d $TARGETDIR ]; then
 	rm -rf $TARGETDIR
@@ -59,7 +60,6 @@ echo * Compiling release build
 make -f Makefile.Release $MAKEOPTS
 
 popd > /dev/null
-fi
 
 echo Copying application bundles...
 
@@ -71,7 +71,6 @@ cp -r ./rpcemu-recompiler.app $RELEASEDIR/
 
 echo Generating self-contained application bundles...
 
-if false; then
 echo * Debug - interpreter
 macdeployqt $DEBUGDIR/rpcemu-interpreter-debug.app
 
