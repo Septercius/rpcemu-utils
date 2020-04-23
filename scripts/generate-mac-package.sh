@@ -63,32 +63,32 @@ popd > /dev/null
 
 echo Copying application bundles...
 
-cp -r ./rpcemu-interpreter-debug.app $DEBUGDIR/
-cp -r ./rpcemu-recompiler-debug.app $DEBUGDIR/
+cp -r ./rpcemu-interpreter-debug.app $DEBUGDIR/RPCEmu-Interpreter-Debug.app
+cp -r ./rpcemu-recompiler-debug.app $DEBUGDIR/RPCEmu-Recompiler-Debug.app
 
-cp -r ./rpcemu-interpreter.app $RELEASEDIR/
-cp -r ./rpcemu-recompiler.app $RELEASEDIR/
+cp -r ./rpcemu-interpreter.app $RELEASEDIR/RPCEmu-Interpreter.app
+cp -r ./rpcemu-recompiler.app $RELEASEDIR/RPCEmu-Recompiler.app
 
 echo Generating self-contained application bundles...
 
 echo * Debug - interpreter
-macdeployqt $DEBUGDIR/rpcemu-interpreter-debug.app
+macdeployqt $DEBUGDIR/RPCEmu-Interpreter-Debug.app
 
 echo * Debug - recompiler
-macdeployqt $DEBUGDIR/rpcemu-recompiler-debug.app
+macdeployqt $DEBUGDIR/RPCEmu-Recompiler-Debug.app
 
 echo * Release - interpreter
-macdeployqt $RELEASEDIR/rpcemu-interpreter.app
+macdeployqt $RELEASEDIR/RPCEmu-Interpreter.app
 
 echo * Release - recompiler
-macdeployqt $RELEASEDIR/rpcemu-recompiler.app
+macdeployqt $RELEASEDIR/RPCEmu-Recompiler.app
 
 echo Copying to data directory...
 for i in cmos.ram COPYING readme.txt rpc.cfg ; do cp $i $DATADIR/ ; done
 for i in netroms riscos-progs roms ; do cp -r $i $DATADIR/ ; done
 
-cp -r $DATADIR $DEBUGDIR/RPCEmu
-cp -r $DATADIR $RELEASEDIR/RPCEmu
+cp -r $DATADIR $DEBUGDIR/Data
+cp -r $DATADIR $RELEASEDIR/Data
 
 echo Generating DMGs
 
