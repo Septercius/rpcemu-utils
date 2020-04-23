@@ -12,7 +12,7 @@ This is a Bash script to automate the process of building the QT toolkit that RP
 
 The script compiles QT using the open source license, and will also not build the examples or any tests.
 
-To compile QT, you will need to download the source from the QT web site: https://download.qt.io/archive/qt/.  Navigate to the appropriate version (generally speaking, the latest) and download the "qt-everywhere-src-<version>.tar.gz" file (e.g. for 5.14.1, https://download.qt.io/archive/qt/5.14/5.14.1/single/qt-everywhere-src-5.14.1.tar.xz).
+To compile QT, you will need to download the source from the QT web site: https://download.qt.io/archive/qt/.  Navigate to the appropriate version (generally speaking, the latest) and download the "qt-everywhere-src-<version>.tar.xz" file (e.g. for 5.14.1, https://download.qt.io/archive/qt/5.14/5.14.1/single/qt-everywhere-src-5.14.1.tar.xz).
 
 (These instructions assume that 5.14.1 is being downloaded - change file/folder names to suit.)
 
