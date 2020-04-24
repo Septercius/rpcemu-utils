@@ -4,6 +4,7 @@ set -x
 
 SOURCEDIR=src
 SOURCEQTDIR=src/qt5
+SOURCEHOSTFSDIR=riscos-progs/HostFS
 
 MAKEOPTS=-j5
 
@@ -25,6 +26,12 @@ fi
 
 if [ ! -d $SOURCEDIR ]; then
 	echo This script must be run from inside the RPCEmu folder.
+	exit 1
+fi
+
+BRANCH=$(git branch | grep '^*' | sed 's/* //' )
+if [ "$BRANCH" != "macosx-release" ]; then
+	echo This script must be run from the release branch.
 	exit 1
 fi
 
@@ -61,6 +68,11 @@ make -f Makefile.Release $MAKEOPTS
 
 popd > /dev/null
 
+echo Building HostFS modules
+pushd $SOURCEHOSTFSDIR > /dev/null
+make
+popd > /dev/null
+
 echo Copying application bundles...
 
 cp -r ./rpcemu-interpreter-debug.app $DEBUGDIR/RPCEmu-Interpreter-Debug.app
@@ -85,7 +97,7 @@ macdeployqt $RELEASEDIR/RPCEmu-Recompiler.app
 
 echo Copying to data directory...
 for i in cmos.ram COPYING readme.txt rpc.cfg ; do cp $i $DATADIR/ ; done
-for i in netroms riscos-progs roms ; do cp -r $i $DATADIR/ ; done
+for i in netroms poduleroms roms ; do cp -r $i $DATADIR/ ; done
 
 cp -r $DATADIR $DEBUGDIR/Data
 cp -r $DATADIR $RELEASEDIR/Data
