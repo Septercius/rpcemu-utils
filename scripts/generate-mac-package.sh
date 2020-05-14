@@ -17,6 +17,8 @@ DEBUGDIR=$TARGETDIR/Debug
 RELEASEDIR=$TARGETDIR/Release
 DATADIR=$TARGETDIR/Data
 DMGDIR=$TARGETDIR/DMGs
+ZIPDIR=$TARGETDIR/ZIPs
+RELZIPDIR=../ZIPs
 
 echo Building release \'$RELEASENAME\'
 
@@ -40,6 +42,7 @@ mkdir $DEBUGDIR
 mkdir $RELEASEDIR
 mkdir $DATADIR
 mkdir $DMGDIR
+mkdir $ZIPDIR
 
 pushd $SOURCEQTDIR > /dev/null
 
@@ -51,19 +54,19 @@ fi
 echo Configuring interpreter builds...
 qmake "CONFIG-=dynarec" rpcemu.pro
 
-echo * Compiling debug build
+echo - Compiling debug build
 make -f Makefile.Debug $MAKEOPTS
 
-echo * Compiling release build
+echo - Compiling release build
 make -f Makefile.Release $MAKEOPTS
 
 echo Configuring recompiler builds...
 qmake "CONFIG+=dynarec" rpcemu.pro
 
-echo * Compiling debug build
+echo - Compiling debug build
 make -f Makefile.Debug $MAKEOPTS
 
-echo * Compiling release build
+echo - Compiling release build
 make -f Makefile.Release $MAKEOPTS
 
 popd > /dev/null
@@ -83,29 +86,42 @@ cp -r ./rpcemu-recompiler.app $RELEASEDIR/RPCEmu-Recompiler.app
 
 echo Generating self-contained application bundles...
 
-echo * Debug - interpreter
+echo - Debug - interpreter
 macdeployqt $DEBUGDIR/RPCEmu-Interpreter-Debug.app
 
-echo * Debug - recompiler
+echo - Debug - recompiler
 macdeployqt $DEBUGDIR/RPCEmu-Recompiler-Debug.app
 
-echo * Release - interpreter
+echo - Release - interpreter
 macdeployqt $RELEASEDIR/RPCEmu-Interpreter.app
 
-echo * Release - recompiler
+echo - Release - recompiler
 macdeployqt $RELEASEDIR/RPCEmu-Recompiler.app
 
 echo Copying to data directory...
 for i in cmos.ram COPYING readme.txt rpc.cfg ; do cp $i $DATADIR/ ; done
 for i in netroms poduleroms roms ; do cp -r $i $DATADIR/ ; done
+mkdir $DATADIR/hostfs
 
 cp -r $DATADIR $DEBUGDIR/Data
 cp -r $DATADIR $RELEASEDIR/Data
 
 echo Generating DMGs
 
-echo * Debug
-hdiutil create -volname $RELEASENAME-Debug -srcfolder $DEBUGDIR -ov -format UDZO $DMGDIR/$RELEASENAME-Debug.dmg -quiet
+echo - Debug
+hdiutil create -volname $RELEASENAME-Debug -srcfolder $DEBUGDIR -ov -format UDZO -fs HFS+ $DMGDIR/$RELEASENAME-Debug.dmg -quiet
 
-echo * Release
-hdiutil create -volname $RELEASENAME-Release -srcfolder $RELEASEDIR -ov -format UDZO $DMGDIR/$RELEASENAME-Release.dmg -quiet
+echo - Release
+hdiutil create -volname $RELEASENAME-Release -srcfolder $RELEASEDIR -ov -format UDZO -fs HFS+ $DMGDIR/$RELEASENAME-Release.dmg -quiet
+
+echo Generating ZIPs
+
+echo - Debug
+pushd $DEBUGDIR > /dev/null
+zip -r -q $RELZIPDIR/$RELEASENAME-Debug.zip *
+popd > /dev/null
+
+echo - Release
+pushd $RELEASEDIR > /dev/null
+zip -r -q $RELZIPDIR/$RELEASENAME-Release.zip *
+popd > /dev/null
