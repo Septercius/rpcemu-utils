@@ -1,6 +1,11 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 set -x
+
+if [ "$1" == "" ]; then
+	echo A version identifer must be specified.
+	exit 1
+fi
 
 SOURCEDIR=src
 SOURCEQTDIR=src/qt5
@@ -44,8 +49,8 @@ mkdir $BUILDDIR
 
 BRANCH=$(git branch | grep '^*' | sed 's/* //' )
 if [ "$BRANCH" != "macosx-release" ]; then
-	echo This script must be run from the release branch.
-	exit 1
+ 	echo This script must be run from the release branch.
+ 	exit 1
 fi
 
 mkdir $TARGETDIR
@@ -61,7 +66,7 @@ function buildForArchitecture
     
     echo "Configuring interpreter builds ($ARCHITECTURE)..."
     
-	pushd $BUILDDIR/$ARCHITECTURE/interpreter
+	  pushd $BUILDDIR/$ARCHITECTURE/interpreter
             
     if [ "$ARCHITECTURE" == "x86" ]; then
         configureForX86 $BUILDDIR/$ARCHITECTURE/interpreter "CONFIG-=dynarec"
@@ -124,29 +129,77 @@ function deployForArchitecture
 	do
 		echo "- $f"
 		if [ "$ARCHITECTURE" == "x86" ]; then
-			macdeployqt $f -qtdir=$QTX86DIR
+			$QTX86DIR/bin/macdeployqt $f -qtdir=$QTX86DIR -always-overwrite -verbose=1
 		else
-			macdeployqt $f -qtdir=$QTARMDIR
+			$QTARMDIR/bin/macdeployqt $f -qtdir=$QTARMDIR -always-overwrite -verbose=1
 		fi
 	done
 	
 	popd
 }
 
+function generateUniversalBinary
+{
+	local APPNAME=$1
+	
+	echo - $APPNAME
+	makeuniversal $BUILDDIR/universal/$APPNAME $BUILDDIR/x86/apps/$APPNAME $BUILDDIR/arm/apps/$APPNAME
+}
+
 function makeFolders
 {
-    local ARCHITECTURE=$1
-    
-    mkdir $BUILDDIR/$ARCHITECTURE
-    
-    if [ "$ARCHITECTURE" == "x86" ] || [ "$ARCHITECTURE" == "arm" ]; then
-		mkdir $BUILDDIR/$ARCHITECTURE/apps
-		mkdir $BUILDDIR/$ARCHITECTURE/interpreter
+		local ARCHITECTURE=$1
+		
+		mkdir $BUILDDIR/$ARCHITECTURE
+		
+		if [ "$ARCHITECTURE" == "x86" ] || [ "$ARCHITECTURE" == "arm" ]; then
+				mkdir $BUILDDIR/$ARCHITECTURE/apps
+				mkdir $BUILDDIR/$ARCHITECTURE/interpreter
 
-		if [ "$ARCHITECTURE" == "x86" ]; then
-			mkdir $BUILDDIR/$ARCHITECTURE/recompiler
-		fi
+				if [ "$ARCHITECTURE" == "x86" ]; then
+					mkdir $BUILDDIR/$ARCHITECTURE/recompiler
+				fi
     fi
+}
+
+function verifyArchitectures
+{
+	local FILEPATH=$1
+	
+	if [ ! -f $FILEPATH ]; then
+		echo The $FILEPATH file does not exist
+		exit 1
+	fi	
+	
+	local ARCHITECTURES=$(lipo -info $FILEPATH | cut -d ':' -f 3 | xargs)
+	
+	if [ "$ARCHITECTURES" != "x86_64 arm64" ]; then
+		echo "    $FILEPATH [FAIL - '$ARCHITECTURES']"
+		exit 1
+	fi
+	
+	echo "    $FILEPATH [PASS]"
+}
+
+function verifyUniversalBinary
+{
+	echo - $1
+
+	local APPNAME=$(echo $1 | cut -d '.' -f 1)
+	local APPDIR=$BUILDDIR/universal/$1
+	local CONTENTSDIR=$APPDIR/Contents
+	local FRAMEWORKSDIR=$CONTENTSDIR/Frameworks
+	
+	local APPFILE=$CONTENTSDIR/MacOS/$APPNAME
+	verifyArchitectures $APPFILE
+	
+	for f in $FRAMEWORKSDIR/*.framework
+	do
+			local FRAMEWORKNAME=$(basename $f | cut -d '.' -f 1)
+			local FRAMEWORKFILE=$f/$FRAMEWORKNAME
+
+			verifyArchitectures $FRAMEWORKFILE
+	done
 }
 
 makeFolders arm
@@ -161,13 +214,11 @@ deployForArchitecture x86
 
 echo "Generating universal binaries..."
 
-for f in $BUILDDIR/arm/apps/*
-do
-	LEAFNAME=$(basename $f)
+generateUniversalBinary rpcemu-interpreter.app
+generateUniversalBinary rpcemu-interpreter-debug.app
 
-	echo "- $LEAFNAME"
-	makeuniversal $BUILDDIR/universal/$LEAFNAME $BUILDDIR/x86/apps/$LEAFNAME $BUILDDIR/arm/apps/$LEAFNAME
-done
+verifyUniversalBinary rpcemu-interpreter.app
+verifyUniversalBinary rpcemu-interpreter-debug.app
 
 echo "Copying single-architecture binaries..."
 
