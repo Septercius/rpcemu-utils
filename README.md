@@ -1,3 +1,5 @@
+:warning: **Attention: this repository is no longer being maintained.  Anyone who wishes to do so is welcome to use the work in this repository to help create their own patches and/or binary releases.** :warning:
+
 # rpcemu-utils
 
 This repository contains utilities to aid developing RPCEmu.
