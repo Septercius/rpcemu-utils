@@ -1,10 +1,6 @@
 # rpcemu-utils
 
-This repository contains utilities to aid developing RPCEmu.
-
-## Scripts
-
-This folder contains the following scripts:
+This repository contains scripts to help with developing RPCEmu on a Mac.  There are two versions of each script - one for QT5 (`scripts/qt5`), and one for QT6 (`scripts/qt6`).
 
 ### build-qt.sh
 
@@ -34,7 +30,7 @@ The script requires a single parameter, namely the installation folder (e.g. "/o
     
 Run the script, passing in the required installation folder.  For example:
 
-    ./build-qt /usr/local/qt
+    ./build-qt /usr/local/qt5
     
 QT will be configured and the script will invoke a build.  It will compile the code using the "-j5" option - change to suit the number of CPU cores present.
 
@@ -56,11 +52,4 @@ Finally, the script will create DMGs for both types of build, and copy these int
 
 Note that the script does not have very much (if anything) in the way of error handling and relies on everything being just so.
 
-### make-patch.sh
-
-This is a simple Bash script used to generate a patch file from a folder of unified diffs.  It requires a single parameter, namely the folder that contains the diff files.  For example:
-
-    ./make-patch.sh ../rpcemu-dev/diffs/0.9.2
-    
-The script will output the diffs to a file named "rpcemu-0.9.2-mac-patch-vX.patch".
 

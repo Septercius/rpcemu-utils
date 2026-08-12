@@ -7,114 +7,61 @@ if [ "$1" == "" ]; then
 	exit 1
 fi
 
-SOURCEDIR=src
-SOURCEQTDIR=src/qt5
-SOURCEHOSTFSDIR=riscos-progs/HostFS
-
-BUILDDIR=build
-
-MAKEOPTS=-j5
-
-VERSION=$(cat $SOURCEDIR/rpcemu.h | grep '#define VERSION' | cut -d ' ' -f 3 | sed -e 's/\"//g')
-NOW=$(date +"%Y%m%d-%H%M%S")
-RELEASENAME=RPCEmu-$VERSION$1
-
-QTX86DIR=/usr/local/qt
-QTARMDIR=/usr/local/qt-arm
-
-TARGETDIR=../Releases/$RELEASENAME-$NOW
-DEBUGDIR=$TARGETDIR/Debug
-RELEASEDIR=$TARGETDIR/Release
-DATADIR=$TARGETDIR/Data
-DMGDIR=$TARGETDIR/DMGs
-ZIPDIR=$TARGETDIR/ZIPs
-RELZIPDIR=../ZIPs
-
-echo Building release \'$RELEASENAME\'
-
-if [ -d $TARGETDIR ]; then
-	rm -rf $TARGETDIR
-fi
-
-if [ ! -d $SOURCEDIR ]; then
-	echo This script must be run from inside the RPCEmu folder.
-	exit 1
-fi
-
-if [ -d $BUILDDIR ]; then
-	rm -rf $BUILDDIR
-fi
-
-mkdir $BUILDDIR
-
-BRANCH=$(git branch | grep '^*' | sed 's/* //' )
-if [ "$BRANCH" != "macosx-release" ]; then
- 	echo This script must be run from the release branch.
- 	exit 1
-fi
-
-mkdir $TARGETDIR
-mkdir $DEBUGDIR
-mkdir $RELEASEDIR
-mkdir $DATADIR
-mkdir $DMGDIR
-mkdir $ZIPDIR
-
 function buildForArchitecture
 {
-    local ARCHITECTURE=$1
-    
-    echo "Configuring interpreter builds ($ARCHITECTURE)..."
-    
-	  pushd $BUILDDIR/$ARCHITECTURE/interpreter
-            
-    if [ "$ARCHITECTURE" == "x86" ]; then
-        configureForX86 $BUILDDIR/$ARCHITECTURE/interpreter "CONFIG-=dynarec"
-    else
-        configureForArm $BUILDDIR/$ARCHITECTURE/interpreter "CONFIG-=dynarec"
-    fi
-
-    compileBuilds $ARCHITECTURE
-    
-    popd
-
-    if [ "$ARCHITECTURE" == "x86" ]; then
-        echo "Configuring recompiler builds ($ARCHITECTURE)..."
-        
-        pushd $BUILDDIR/$ARCHITECTURE/recompiler
-        
-        configureForX86 $BUILDDIR/$ARCHITECTURE/interpreter "CONFIG+=dynarec"
-        compileBuilds $ARCHITECTURE
-        
-        popd
-    fi
+	local ARCHITECTURE=$1
+	
+	echo "Configuring interpreter builds ($ARCHITECTURE)..."
+	
+	pushd $BUILDDIR/$ARCHITECTURE/interpreter
+	
+	if [ "$ARCHITECTURE" == "x86" ]; then
+		configureForX86 $BUILDDIR/$ARCHITECTURE/interpreter "CONFIG-=dynarec"
+	else
+		configureForArm $BUILDDIR/$ARCHITECTURE/interpreter "CONFIG-=dynarec"
+	fi
+	
+	compileBuilds $ARCHITECTURE
+	
+	popd
+	
+	if [ "$ARCHITECTURE" == "x86" ]; then
+		echo "Configuring recompiler builds ($ARCHITECTURE)..."
+		
+		pushd $BUILDDIR/$ARCHITECTURE/recompiler
+		
+		configureForX86 $BUILDDIR/$ARCHITECTURE/recompiler "CONFIG+=dynarec"
+		compileBuilds $ARCHITECTURE
+		
+		popd
+	fi
 }
 
 function compileBuilds
 {
-    local ARCHITECTURE="$1"
+	local ARCHITECTURE="$1"
 
-    echo "- Compiling debug build ($ARCHITECTURE)"
-    make -f Makefile.Debug $MAKEOPTS
+	echo "- Compiling debug build ($ARCHITECTURE)"
+	make -f Makefile.Debug $MAKEOPTS
 
-    echo "- Compiling release build ($ARCHITECTURE)"
-    make -f Makefile.Release $MAKEOPTS
+	echo "- Compiling release build ($ARCHITECTURE)"
+	make -f Makefile.Release $MAKEOPTS
 }
 
 function configureForArm
 {
-    local OUTPUTDIR=$1
-    local CONFIGVALUE=$2
-    
-    PATH=$OLDPATH:$QTARMDIR/bin qmake $CONFIGVALUE "QMAKE_APPLE_DEVICE_ARCHS=arm64" -after DESTDIR=../apps ../../../src/qt5/rpcemu.pro
+	local OUTPUTDIR=$1
+	local CONFIGVALUE=$2
+	
+	PATH=$PATH:$QTDIR/bin qmake $CONFIGVALUE "QMAKE_APPLE_DEVICE_ARCHS=arm64" -after DESTDIR=../apps ../../../../src/qt5/rpcemu.pro
 }
 
 function configureForX86
 {
-    local OUTPUTDIR=$1
-    local CONFIGVALUE=$2
-  
-    PATH=$PATH:$QTX86DIR/bin qmake $CONFIGVALUE -after DESTDIR=../apps ../../../src/qt5/rpcemu.pro
+	local OUTPUTDIR=$1
+	local CONFIGVALUE=$2
+	
+	PATH=$PATH:$QTDIR/bin qmake $CONFIGVALUE "QMAKE_APPLE_DEVICE_ARCHS=x86_64" -after DESTDIR=../apps ../../../../src/qt5/rpcemu.pro
 }
 
 function deployForArchitecture
@@ -128,11 +75,7 @@ function deployForArchitecture
 	for f in *
 	do
 		echo "- $f"
-		if [ "$ARCHITECTURE" == "x86" ]; then
-			$QTX86DIR/bin/macdeployqt $f -qtdir=$QTX86DIR -always-overwrite -verbose=1
-		else
-			$QTARMDIR/bin/macdeployqt $f -qtdir=$QTARMDIR -always-overwrite -verbose=1
-		fi
+		$QTDIR/bin/macdeployqt $f -always-overwrite -verbose=1
 	done
 	
 	popd
@@ -141,9 +84,12 @@ function deployForArchitecture
 function generateUniversalBinary
 {
 	local APPNAME=$1
+	local BINARYNAME=$2
 	
 	echo - $APPNAME
-	makeuniversal $BUILDDIR/universal/$APPNAME $BUILDDIR/x86/apps/$APPNAME $BUILDDIR/arm/apps/$APPNAME
+	
+	cp -R $BUILDDIR/x86/apps/$APPNAME $BUILDDIR/universal
+	lipo -create -output $BUILDDIR/universal/$APPNAME/Contents/MacOS/$BINARYNAME $BUILDDIR/x86/apps/$APPNAME/Contents/MacOS/$BINARYNAME $BUILDDIR/arm/apps/$APPNAME/Contents/MacOS/$BINARYNAME
 }
 
 function makeFolders
@@ -159,7 +105,7 @@ function makeFolders
 				if [ "$ARCHITECTURE" == "x86" ]; then
 					mkdir $BUILDDIR/$ARCHITECTURE/recompiler
 				fi
-    fi
+			fi
 }
 
 function verifyArchitectures
@@ -202,6 +148,58 @@ function verifyUniversalBinary
 	done
 }
 
+BRANCH=$(git branch | grep '^*' | sed 's/* //' )
+if [ "$BRANCH" != "macosx-release" ]; then
+ 	echo This script must be run from the release branch.
+ 	exit 1
+fi
+
+SOURCEDIR=src
+SOURCEQTDIR=src/qt5
+SOURCEHOSTFSDIR=riscos-progs/HostFS
+
+BUILDDIR=build/qt5
+
+MAKEOPTS=-j5
+
+VERSION=$(cat $SOURCEDIR/rpcemu.h | grep '#define VERSION' | cut -d ' ' -f 3 | sed -e 's/\"//g')
+NOW=$(date +"%Y%m%d-%H%M%S")
+RELEASENAME=RPCEmu-$VERSION$1
+
+QTDIR=/usr/local/qt5
+
+TARGETDIR=../Releases/$RELEASENAME-$NOW
+DEBUGDIR=$TARGETDIR/Debug
+RELEASEDIR=$TARGETDIR/Release
+DATADIR=$TARGETDIR/Data
+DMGDIR=$TARGETDIR/DMGs
+ZIPDIR=$TARGETDIR/ZIPs
+RELZIPDIR=../ZIPs
+
+echo Building release \'$RELEASENAME\'
+
+if [ -d $TARGETDIR ]; then
+	rm -rf $TARGETDIR
+fi
+
+if [ ! -d $SOURCEDIR ]; then
+	echo This script must be run from inside the RPCEmu folder.
+	exit 1
+fi
+
+if [ -d $BUILDDIR ]; then
+	rm -rf $BUILDDIR
+fi
+
+mkdir -p $BUILDDIR
+
+mkdir $TARGETDIR
+mkdir $DEBUGDIR
+mkdir $RELEASEDIR
+mkdir $DATADIR
+mkdir $DMGDIR
+mkdir $ZIPDIR
+
 makeFolders arm
 makeFolders x86
 makeFolders universal
@@ -214,8 +212,8 @@ deployForArchitecture x86
 
 echo "Generating universal binaries..."
 
-generateUniversalBinary rpcemu-interpreter.app
-generateUniversalBinary rpcemu-interpreter-debug.app
+generateUniversalBinary rpcemu-interpreter.app rpcemu-interpreter
+generateUniversalBinary rpcemu-interpreter-debug.app rpcemu-interpreter-debug
 
 verifyUniversalBinary rpcemu-interpreter.app
 verifyUniversalBinary rpcemu-interpreter-debug.app
@@ -278,5 +276,3 @@ popd > /dev/null
 
 echo
 echo Package complete.
-
-

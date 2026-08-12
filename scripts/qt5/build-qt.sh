@@ -1,8 +1,22 @@
 #!/bin/bash
 
 set -e
+set -x
 
-./configure -prefix $1 \
+if [ "$1" == "" ]; then
+	echo A prefix must be supplied.
+	exit 1
+fi
+
+if [ -d ./build ]; then
+	rm -rf build
+fi
+
+mkdir build
+cd build
+
+../configure -prefix $1 \
+	QMAKE_APPLE_DEVICE_ARCHS="x86_64 arm64" \
 	-nomake examples \
 	-nomake tests \
 	-opensource \
@@ -41,6 +55,6 @@ set -e
 	-skip qtwebview \
 	-skip qtxmlpatterns
 
-sed -e '/^        CONFIG += no_plist$/d;/^    !force_debug_plist/d' -i .bak qtbase/mkspecs/features/resolve_config.prf
+sed -e '/^        CONFIG += no_plist$/d;/^    !force_debug_plist/d' -i .bak ../qtbase/mkspecs/features/resolve_config.prf
 make -j5
 
