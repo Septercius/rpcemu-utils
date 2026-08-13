@@ -15,6 +15,7 @@ cd build
 	-nomake tests \
 	-opensource \
 	-submodules qtbase,qtmultimedia \
+	-no-feature-ffmpeg \
 	-skip qtdeclarative,qtimageformats,qtlanguageserver,qtquick3d,qtquicktimeline,qtsvg \
 	-- -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
 
