@@ -76,7 +76,7 @@ DMGDIR=${TARGETDIR}/DMGs
 ZIPDIR=${TARGETDIR}/ZIPs
 RELATIVEZIPDIR=../ZIPs
 
-printf "\n${BLK}Building ${GRN}${RELEASENAME}${BLK} into folder ${PUR}${TARGETDIR}${BLK}\n"
+printf "\n${BLK}Building ${GRN}${RELEASENAME}${BLK} into folder ${GRN}${TARGETDIR}${BLK}\n"
 
 # Create required folders.
 mkdir -p ${TARGETDIR}
@@ -269,24 +269,39 @@ fi
 
 
 
+# Create required folders in the data directory.
+for f in hostfs netroms poduleroms roms
+do
+	printf "${BLK}Creating data folder ${GRN}${f}${BLK}\n"
+	mkdir -p ${DATADIR}/${f}
+done
+
 # Copy required files and folders to the data directory.
 printf "\n"
+
 for f in cmos.ram COPYING readme.txt rpc.cfg
 do
 	printf "${BLK}Copying file ${GRN}${f}${BLK} to data directory\n"
 	cp ${f} ${DATADIR}/
 done
 
-for f in netroms poduleroms roms
+for f in netroms/*,ffa
 do
-	printf "${BLK}Copying folder ${GRN}${f}${BLK} to data directory\n"
-	cp -R ${f} $DATADIR/
+	printf "${BLK}Copying file ${GRN}${f}${BLK} to data directory\n"
+	cp ${f} ${DATADIR}/netroms
 done
 
+for f in poduleroms/*,ffa
+do
+	printf "${BLK}Copying file ${GRN}${f}${BLK} to data directory\n"
+	cp ${f} ${DATADIR}/poduleroms
+done
 
-
-# Create an empty HostFS folder
-mkdir ${DATADIR}/hostfs
+for f in roms/*.txt
+do
+	printf "${BLK}Copying file ${GRN}${f}${BLK} to data directory\n"
+	cp ${f} ${DATADIR}/roms
+done
 
 
 
