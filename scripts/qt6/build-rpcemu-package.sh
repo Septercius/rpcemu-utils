@@ -43,13 +43,6 @@ PUR="\033[0;35m"
 CYN="\033[0;36m"
 WHT="\033[1;37m"
 
-# Check the branch is correct.
-branchName=$(git branch | grep '^*' | sed 's/* //' )
-if [ "${branchName}" != "macosx-release" ]; then
- 	printf "${RED}This script must be run from the release branch.${BLK}\n"
- 	# exit 1
-fi
-
 # Set folders for source.
 sourceDir=src
 
