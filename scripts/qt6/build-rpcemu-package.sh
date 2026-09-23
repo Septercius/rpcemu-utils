@@ -9,7 +9,7 @@ while [[ $# -gt 0 ]]
 do
 	case $1 in
 		--help)
-			echo "usage: build-rpcemu-package.sh --suffix <version suffix> [--networking]"
+			echo "usage: build-rpcemu-package.sh --suffix <version suffix> [--multihostfs] [--networking]"
 			exit 0
 			;;
 		--multihostfs)
@@ -103,16 +103,6 @@ buildDir=build
 debugBuildDir=${buildDir}/debug
 releaseBuildDir=${buildDir}/release
 
-# Record the build configuration.
-cat > ${buildDir}/build.config <<EOF
-Version: ${versionNumber}
-Version suffix: ${versionSuffix}
-Multi-HostFS feature enabled: ${featureFlagMultiHostFS}
-Networking feature enabled: ${featureFlagNetworking}
-
-Release name: ${releaseName}
-EOF
-
 printf "\n${BLK}Building ${GRN}${releaseName}${BLK} using folder ${GRN}${targetDir}${BLK}\n"
 
 # Create required folders.
@@ -131,6 +121,18 @@ fi
 mkdir -p ${buildDir}
 mkdir -p ${debugBuildDir}
 mkdir -p ${releaseBuildDir}
+
+
+
+# Record the build configuration.
+cat > ${buildDir}/build.config <<EOF
+Version: ${versionNumber}
+Version suffix: ${versionSuffix}
+Multi-HostFS feature enabled: ${featureFlagMultiHostFS}
+Networking feature enabled: ${featureFlagNetworking}
+
+Release name: ${releaseName}
+EOF
 
 
 
@@ -238,6 +240,18 @@ else
 	fi
 fi
 
+
+
+# Ensure the scroll wheel file is present.
+if [ ! -f poduleroms/scrollwheel,ffa ]; then
+	printf "\n${BLK}Building ${GRN}scroll wheel binary\n"
+	pushd riscos-progs/ScrollWheel > /dev/null
+	make
+	popd > /dev/null
+fi
+
+
+
 # Create required folders in the data directory.
 printf "\n"
 
@@ -263,13 +277,13 @@ do
 done
 
 if [ "${featureFlagMultiHostFS}" == "ON" ]; then
-	for f in poduleroms/multihostfs,ffa poduleroms/multihostfsfiler,ffa
+	for f in poduleroms/multihostfs,ffa poduleroms/multihostfsfiler,ffa scrollwheel,ffa
 	do
 		printf "${BLK}Copying file ${GRN}${f}${BLK} to data directory\n"
 		cp ${f} ${dataDir}/poduleroms
 	done
 else
-	for f in poduleroms/hostfs,ffa poduleroms/hostfsfiler,ffa
+	for f in poduleroms/hostfs,ffa poduleroms/hostfsfiler,ffa scrollwheel,ffa
 	do
 		printf "${BLK}Copying file ${GRN}${f}${BLK} to data directory\n"
 		cp ${f} ${dataDir}/poduleroms
